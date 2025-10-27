@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CE2407A — Tutorial Set #2 (Q3–Q5) — Wizard + AI‑Coach (MathJax smaller)</title>
+
+<!-- MathJax v3: CHTML output, no auto-typeset. We typeset each chat bubble on demand. -->
+<script>
+  window.MathJax = {
+    startup: {
+      typeset: false,
+      ready: () => {
+        MathJax.startup.defaultReady();
+        window._mjReady = true;
+      }
+    },
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$','$$'], ['\\[','\\]']],
+      processEscapes: true
+    },
+    chtml: { scale: 0.9 }  // reduce size globally by ~10%
+  };
+</script>
+<script id="MathJax-script" defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+<style>
+  :root{
+    --bg:#0b132b; --card:#1c2541; --accent:#5bc0be;
+    --accent2:#c5d86d; --text:#f0f3f7; --muted:#a8b3c7;
+    --danger:#ff6b6b; --ok:#00c896; --warn:#ffd166;
+    --kbd:#2b2f42;
+    /* Math size control for MJX containers inside the coach */
+    --mj-scale: 0.95; /* unitless factor for font-size calc below */
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Inter,Ubuntu,Arial,sans-serif}
+  a{color:var(--accent)}
+  header{padding:18px 16px;background:linear-gradient(180deg,#0b132b 0%,#111a36 100%);
+    border-bottom:1px solid rgba(255,255,255,.06); position:sticky; top:0; z-index:20}
+  .container{max-width:1100px;margin:0 auto;padding:18px}
+  h1{font-size:clamp(22px,3vw,28px);margin:0 0 2px 0}
+  p.lead{color:var(--muted);margin:0}
+  .score{font-weight:800}
+  .card{background:var(--card);border:1px solid rgba(255,255,255,.08);
+    border-radius:14px;padding:16px;box-shadow:0 8px 24px rgba(0,0,0,.25); margin-bottom:16px}
+  .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:rgba(91,192,190,.15);
+    color:var(--accent);font-weight:600;font-size:12px;letter-spacing:.25px}
+  label{display:block;font-weight:600;margin:10px 0 4px}
+  input[type="number"], input[type="text"], select{
+    width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);
+    background:#0e162f;color:var(--text);outline:none}
+  input[type="number"]:focus, input[type="text"]:focus, select:focus{border-color:var(--accent)}
+  button{appearance:none;border:0;border-radius:10px;padding:10px 14px;background:var(--accent);
+    color:#04131c;font-weight:700;cursor:pointer;transition:.15s transform ease, .15s filter ease;
+    box-shadow:0 5px 16px rgba(0,0,0,.25)}
+  button.secondary{background:#233058;color:#dee6ff}
+  button.ghost{background:transparent;border:1px solid rgba(255,255,255,.15);color:#e6edff}
+  button.warn{background:var(--warn);color:#3a2c00}
+  button:hover{filter:brightness(1.05)} button:active{transform:translateY(1px)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .row > *{flex:1 1 260px}
+  .svg-wrap{background:#0f1833;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px;margin-top:8px}
+  svg{width:100%;height:300px;background:#0f1833;border-radius:8px}
+  .small{font-size:12px;color:var(--muted)}
+  .ok{color:var(--ok)} .bad{color:var(--danger)}
+  .hr{height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent);margin:12px 0}
+  .footer{color:var(--muted);font-size:12px;margin-top:20px}
+  /* Wizard bits */
+  .steps{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .step{border:1px solid rgba(255,255,255,.15);background:#12204b;color:#e6edff;padding:8px 12px;border-radius:10px;cursor:pointer}
+  .step.active{background:var(--accent);color:#04131c;border-color:transparent;font-weight:800}
+  .wizard-nav{display:flex;gap:8px;justify-content:space-between;align-items:center;position:sticky;bottom:0;padding:10px 0;z-index:15}
+  .hidden{display:none}
+  .kbd{display:inline-block;background:var(--kbd);border:1px solid rgba(255,255,255,.12);border-bottom-color:rgba(0,0,0,.6);padding:2px 6px;border-radius:6px;font-family:ui-monospace,Consolas,Menlo,monospace}
+
+  /* AI‑COACH */
+  .coach-fab{
+    position:fixed; right:22px; bottom:22px; width:56px; height:56px; border-radius:50%;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    color:#04131c; display:flex; align-items:center; justify-content:center;
+    font-weight:900; box-shadow:0 10px 30px rgba(0,0,0,.45); cursor:pointer; z-index:9999;
+    border:1px solid rgba(255,255,255,.22);
+  }
+  .coach-panel{
+    position:fixed; right:22px; bottom:86px; width:360px; max-height:70vh; display:none;
+    background:var(--card); border:1px solid rgba(255,255,255,.12); border-radius:16px;
+    box-shadow:0 14px 40px rgba(0,0,0,.5); z-index:9999; overflow:hidden; display:flex; flex-direction:column;
+  }
+  .coach-header{padding:10px 12px; background:#12204b; color:#e6edff; font-weight:700; font-size:14px;
+    display:flex; justify-content:space-between; align-items:center}
+  .coach-body{padding:10px; overflow:auto; gap:8px; display:flex; flex-direction:column}
+  .coach-msg{background:#0f1833; border:1px solid rgba(255,255,255,.12); color:#e7efff;
+    padding:8px 10px; border-radius:10px; font-size:13px; white-space:pre-wrap}
+  .coach-self{align-self:flex-end; background:#0f1e3f}
+  .coach-input{display:flex; gap:8px; padding:10px; border-top:1px solid rgba(255,255,255,.12); background:#0e162f}
+  .coach-input input{flex:1; background:#0b132b; color:#e5e7eb; border:1px solid rgba(255,255,255,.18);
+    border-radius:10px; padding:8px 10px; font-size:13px}
+  .coach-input button{background:var(--accent); border:none; border-radius:10px; padding:8px 10px; color:#04131c; font-weight:800; cursor:pointer}
+  .coach-quick{display:flex; gap:6px; flex-wrap:wrap; padding:8px 10px; border-top:1px dashed rgba(255,255,255,.16)}
+  .quick{background:#0b1a36; border:1px solid rgba(255,255,255,.16); color:#cfe9ff; font-size:12px; padding:4px 6px; border-radius:8px; cursor:pointer}
+  .coach-config{padding:8px 10px; border-top:1px solid rgba(255,255,255,.12); display:grid; gap:8px}
+  .coach-config input{background:#0b132b;color:#e5e7eb;border:1px solid rgba(255,255,255,.18);border-radius:10px;padding:6px 8px;font-size:12px}
+  .coach-config .tiny{font-size:11px;color:#a8b3c7}
+  /* Make MathJax a touch smaller and center it nicely in bubbles */
+  .coach-msg mjx-container { font-size: calc(1em * var(--mj-scale)); vertical-align: middle; }
+</style>
+</head>
+<body>
+<header>
+  <div class="container" style="display:flex;align-items:flex-start;gap:12px;justify-content:space-between">
+    <div>
+      <h1>CE2407A — Tutorial Set #2 (Q3–Q5)</h1>
+      <p class="lead">One‑page wizard: pick Q3, Q4, or Q5. The AI‑Coach (🤖) floats at bottom‑right and renders LaTeX (smaller, adjustable).</p>
+    </div>
+    <div class="score">Score: <span id="score">0</span> / 3</div>
+  </div>
+  <div class="container steps">
+    <button class="step active" data-step="3" onclick="gotoStep(3)">Q3 — Airport Congestion</button>
+    <button class="step" data-step="4" onclick="gotoStep(4)">Q4 — Storm Sewer</button>
+    <button class="step" data-step="5" onclick="gotoStep(5)">Q5 — Fuel on Highway</button>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Q3 -->
+  <section id="q3" class="card">
+    <div class="pill">Q3 — Airport congestion under normal demand and growth</div>
+    <p>Present peak‑hour volume is Normal with mean <b>μ=200</b> and std. dev. <b>σ=60</b>. Congestion occurs if volume exceeds runway capacity <b>C</b>. Assume one peak hour per day. Mean grows at <b>g</b>%/year (linear or compound), and the coefficient of variation remains constant.</p>
+    <div class="row">
+      <div><label>Current mean μ (planes/hr)</label><input id="q3_mu0" type="number" step="0.1" value="200"></div>
+      <div><label>Current standard deviation σ</label><input id="q3_s0" type="number" step="0.1" value="60"></div>
+      <div><label>Present capacity C (planes/hr)</label><input id="q3_C0" type="number" step="1" value="350"></div>
+    </div>
+    <div class="row">
+      <div><label>Growth rate per year (%)</label><input id="q3_g" type="number" step="0.1" value="10"></div>
+      <div><label>Years ahead (t)</label><input id="q3_t" type="number" step="1" value="10"></div>
+      <div><label>Growth mode</label>
+        <select id="q3_mode">
+          <option value="linear" selected>Linear: μ(t)=μ₀+g·μ₀·t</option>
+          <option value="compound">Compound: μ(t)=μ₀(1+g)^t</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:8px">
+      <button onclick="q3_compute()">Compute &amp; Plot</button>
+      <button class="secondary" onclick="q3_reset()">Reset</button>
+    </div>
+
+    <div class="svg-wrap"><h3>Normal curve with shaded congestion tail (x &gt; C)</h3><svg id="q3_plot" viewBox="0 0 640 300" role="img" aria-label="Normal tail"></svg></div>
+
+    <div class="hr"></div>
+    <div class="row">
+      <div><label>(a) Daily probability now</label><input id="q3_a" type="number" step="0.0001"></div>
+      <div><label>(b) Probability in t years (no expansion)</label><input id="q3_b" type="number" step="0.0001"></div>
+      <div><label>(c) Required capacity in t years</label><input id="q3_c" type="number" step="0.001"></div>
+    </div>
+
+    <div class="hr"></div>
+    <div class="row">
+      <div>Per‑peak‑hour congestion (now): <span id="q3_p_now"><code>–</code></span></div>
+      <div>Projected μ(t), σ(t): <span id="q3_mu_t"><code>–</code></span>, <span id="q3_s_t"><code>–</code></span></div>
+      <div>Congestion in year t: <span id="q3_p_t"><code>–</code></span></div>
+      <div>Required C to keep service: <span id="q3_C_req"><code>–</code></span></div>
+    </div>
+
+    <div class="row wizard-nav">
+      <button class="ghost" onclick="gotoStep(4)">Next →</button>
+      <div style="display:flex; gap:8px">
+        <button onclick="q3_check()">Check answers</button>
+        <button class="ghost" onclick="q3_solution()">Show solution</button>
+      </div>
+    </div>
+    <div id="q3_fb" class="small"></div>
+  </section>
+
+  <!-- Q4 -->
+  <section id="q4" class="card hidden">
+    <div class="pill">Q4 — Storm sewer flooding (lognormal runoff + annual PMF)</div>
+    <p>Number of storms per year has PMF on n=0..3. Storm runoff peak is lognormal with median 7 cfs and COV 15%. Sewer is adequate if runoff &lt; 8 cfs. Assume independence across storms.</p>
+    <div class="row">
+      <div><label>Lognormal median (cfs)</label><input id="q4_med" type="number" step="0.01" value="7"></div>
+      <div><label>COV</label><input id="q4_cov" type="number" step="0.0001" value="0.15"></div>
+      <div><label>Flooding threshold T (cfs)</label><input id="q4_thr" type="number" step="0.01" value="8"></div>
+    </div>
+    <div class="row">
+      <div><label>p(N=0)</label><input id="q4_p0" type="number" step="0.0001" value="0.1"></div>
+      <div><label>p(N=1)</label><input id="q4_p1" type="number" step="0.0001" value="0.2"></div>
+      <div><label>p(N=2)</label><input id="q4_p2" type="number" step="0.0001" value="0.4"></div>
+      <div><label>p(N=3)</label><input id="q4_p3" type="number" step="0.0001" value="0.3"></div>
+    </div>
+
+    <div class="row" style="margin-top:8px">
+      <button onclick="q4_compute()">Compute &amp; Plot</button>
+      <button class="secondary" onclick="q4_reset()">Reset</button>
+    </div>
+
+    <div class="svg-wrap"><h3>Annual PMF (n=0,1,2,3)</h3><svg id="q4_pmf" viewBox="0 0 640 300" role="img" aria-label="Annual PMF"></svg></div>
+
+    <div class="hr"></div>
+    <div class="row">
+      <div><label>(a) Mean storms/year</label><input id="q4_a1" type="number" step="0.001"></div>
+      <div><label>(a) Variance of storms/year</label><input id="q4_a2" type="number" step="0.001"></div>
+      <div><label>(b) P(flood | storm)</label><input id="q4_b" type="number" step="0.0001"></div>
+      <div><label>(c) Annual P(≥1 flood)</label><input id="q4_c" type="number" step="0.0001"></div>
+    </div>
+
+    <div class="row wizard-nav">
+      <button class="ghost" onclick="gotoStep(3)">← Back</button>
+      <button class="ghost" onclick="gotoStep(5)">Next →</button>
+      <div style="display:flex; gap:8px">
+        <button onclick="q4_check()">Check answers</button>
+        <button class="ghost" onclick="q4_solution()">Show solution</button>
+      </div>
+    </div>
+    <div id="q4_fb" class="small"></div>
+  </section>
+
+  <!-- Q5 -->
+  <section id="q5" class="card hidden">
+    <div class="pill">Q5 — Fuel on the highway (Poisson + thinning)</div>
+    <p>Stations along a highway follow a Poisson process with mean 1 per 10 miles (λ=0.1/mi). Each station independently has no gas with probability 0.2 by default.</p>
+    <div class="row">
+      <div><label>Rate λ (stations per mile)</label><input id="q5_lam" type="number" step="0.0001" value="0.1"></div>
+      <div><label>Segment length L for part (a) (miles)</label><input id="q5_L" type="number" step="0.1" value="15"></div>
+    </div>
+    <div class="row">
+      <div><label>Shortage probability at a station</label><input id="q5_p" type="number" step="0.0001" value="0.2" min="0" max="1"></div>
+      <div><label>“Next k stations” (part b)</label><input id="q5_k" type="number" step="1" value="3" min="0"></div>
+      <div><label>Reach before empty R (miles)</label><input id="q5_R" type="number" step="0.1" value="15" min="0"></div>
+    </div>
+
+    <div class="row" style="margin-top:8px">
+      <button onclick="q5_compute()">Compute &amp; Plot</button>
+      <button class="secondary" onclick="q5_reset()">Reset</button>
+    </div>
+
+    <div class="svg-wrap"><h3>Key probabilities</h3><svg id="q5_plot" viewBox="0 0 640 300" role="img" aria-label="Q5 bars"></svg></div>
+
+    <div class="hr"></div>
+    <div class="row">
+      <div><label>(a) P(N≤1 in L)</label><input id="q5_a" type="number" step="0.0001"></div>
+      <div><label>(b) P(none of next k have gas)</label><input id="q5_b" type="number" step="0.0001"></div>
+      <div><label>(c) P(stranded)</label><input id="q5_c" type="number" step="0.0001"></div>
+    </div>
+
+    <div class="row wizard-nav">
+      <button class="ghost" onclick="gotoStep(4)">← Back</button>
+      <div style="display:flex; gap:8px">
+        <button onclick="q5_check()">Check answers</button>
+        <button class="ghost" onclick="q5_solution()">Show solution</button>
+      </div>
+    </div>
+    <div id="q5_fb" class="small"></div>
+  </section>
+
+  <p class="footer">Built as a one‑page wizard (Q3–Q5) with a floating AI‑Coach. Plots are inline SVG; no external libraries.</p>
+</div>
+
+<script>
+/* ---------- Wizard / Score ---------- */
+let CURRENT_STEP = 3;
+let SCORE = 0;
+function computeScore(){
+  SCORE = (sessionStorage.getItem('done_q3')?1:0) + (sessionStorage.getItem('done_q4')?1:0) + (sessionStorage.getItem('done_q5')?1:0);
+  document.getElementById('score').textContent=SCORE;
+}
+function gotoStep(n){
+  CURRENT_STEP = n;
+  ['q3','q4','q5'].forEach((id,idx)=>document.getElementById(id).classList.toggle('hidden', (idx+3)!==n));
+  document.querySelectorAll('.step').forEach(btn=>btn.classList.toggle('active', +btn.dataset.step===n));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+computeScore();
+
+/* ---------- Helpers ---------- */
+function clamp(x,lo,hi){ return Math.max(lo, Math.min(hi, x)); }
+const fmt=p=>Number(p).toFixed(4);
+function erf(x){
+  const sign = Math.sign(x) || 1;
+  x = Math.abs(x);
+  const a1=0.254829592, a2=-0.284496736, a3=1.421413741, a4=-1.453152027, a5=1.061405429;
+  const p=0.3275911;
+  const t=1/(1+p*x);
+  const y=1-((((a5*t + a4)*t + a3)*t + a2)*t + a1)*t*Math.exp(-x*x);
+  return sign*y;
+}
+function Phi(x){ return 0.5*(1+erf(x/Math.SQRT2)); }
+function normInv(p){
+  if(p<=0 || p>=1) return NaN;
+  const a=[-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02, 1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00];
+  const b=[-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02, 6.680131188771972e+01, -1.328068155288572e+01];
+  const c=[-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00, -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00];
+  const d=[7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00, 3.754408661907416e+00];
+  const plow = 0.02425, phigh=1-plow;
+  let q, r;
+  if(p<plow){
+    q=Math.sqrt(-2*Math.log(p));
+    return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  } else if(p>phigh){
+    q=Math.sqrt(-2*Math.log(1-p));
+    return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) / ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  } else {
+    q=p-0.5;
+    r=q*q;
+    return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q / (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+  }
+}
+
+/* ---------- Drawing helpers ---------- */
+function drawBars(id, xs, ys){
+  const svg=document.getElementById(id); svg.innerHTML='';
+  const w=640,h=300,x0=40,y0=h-30,plotW=w-60,plotH=h-50,maxY=Math.max(...ys,1e-9)*1.15;
+  const spacing=plotW/xs.length, bw=spacing*0.6;
+  // axes
+  svg.innerHTML += `<line x1="40" x2="40" y1="10" y2="${y0}" stroke="#6f7ea3" />
+                    <line x1="40" x2="${w-10}" y1="${y0}" y2="${y0}" stroke="#6f7ea3" />`;
+  xs.forEach((x,i)=>{
+    const xPos=x0+i*spacing+(spacing-bw)/2; const barH=(ys[i]/maxY)*plotH;
+    svg.innerHTML += `<rect x="${xPos}" y="${y0-barH}" width="${bw}" height="${barH}" fill="#5bc0be" opacity="0.9" />`;
+    svg.innerHTML += `<text x="${x0+i*spacing+spacing/2}" y="${y0+16}" text-anchor="middle" fill="#c0c9e8" font-size="12">${x}</text>`;
+  });
+  for(let i=0;i<=5;i++){const yy=y0-(i/5)*plotH; const val=(maxY*i/5);
+    svg.innerHTML += `<text x="6" y="${yy+4}" fill="#c0c9e8" font-size="12">${val.toFixed(2)}</text>
+                      <line x1="40" x2="${w-10}" y1="${yy}" y2="${yy}" stroke="rgba(255,255,255,.05)" />`;
+  }
+}
+function drawNormalTail(id, mu, s, C){
+  const svg=document.getElementById(id); svg.innerHTML='';
+  const w=640,h=300,x0=40,y0=h-30,plotW=w-60,plotH=h-50;
+  const xmin=mu - 4*s, xmax=mu + 4*s;
+  const yMax=1/(s*Math.sqrt(2*Math.PI));
+  const sx=v=>x0+(v-xmin)/(xmax-xmin)*plotW;
+  const sy=v=>y0-(v/yMax)*plotH;
+  // axes
+  svg.innerHTML += `<line x1="${x0}" x2="${x0}" y1="10" y2="${y0}" stroke="#6f7ea3" />
+                    <line x1="${x0}" x2="${w-10}" y1="${y0}" y2="${y0}" stroke="#6f7ea3" />`;
+  // curve
+  let d=''; const N=320;
+  for(let i=0;i<=N;i++){
+    const x=xmin + (xmax-xmin)*i/N;
+    const y=(1/(s*Math.sqrt(2*Math.PI)))*Math.exp(-0.5*((x-mu)/s)**2);
+    d+=(i?'L':'M')+sx(x)+','+sy(y);
+  }
+  svg.innerHTML += `<path d="${d}" fill="none" stroke="#5bc0be" stroke-width="2.5"/>`;
+  // tail shade
+  let tail=''; let started=false;
+  for(let i=0;i<=N;i++){
+    const x=xmin + (xmax-xmin)*i/N;
+    const y=(1/(s*Math.sqrt(2*Math.PI)))*Math.exp(-0.5*((x-mu)/s)**2);
+    if(x>=C){ tail+=(started?'L':'M')+sx(x)+','+sy(y); started=true; }
+  }
+  if(started){ tail += `L ${sx(xmax)} ${sy(0)} L ${sx(C)} ${sy(0)} Z`;
+    svg.innerHTML += `<path d="${tail}" fill="rgba(255,107,107,0.35)" stroke="none"/>`; }
+  // marker
+  svg.innerHTML += `<line x1="${sx(C)}" x2="${sx(C)}" y1="10" y2="${y0}" stroke="rgba(255,107,107,0.9)" stroke-dasharray="4 3" stroke-width="2"/>`;
+  svg.innerHTML += `<text x="${sx(C)+6}" y="18" fill="#ffd8d8" font-size="12">C=${C}</text>`;
+}
+
+/* ---------- Q3 logic ---------- */
+function q3_params(){
+  const mu0=+q3_mu0.value, s0=+q3_s0.value, C0=+q3_C0.value;
+  const z0=(C0-mu0)/s0, pTail=1-Phi(z0);
+  const g=(+q3_g.value)/100, t=+q3_t.value, mode=q3_mode.value;
+  const mu_t = (mode==='linear') ? (mu0 + g*mu0*t) : (mu0*Math.pow(1+g,t));
+  const cov = s0/mu0;
+  const s_t = cov*mu_t;
+  const zt = (C0 - mu_t)/s_t, pTail_t = 1-Phi(zt);
+  const zKeep = normInv(1-pTail);
+  const Creq = mu_t + s_t*zKeep;
+  return {pTail, mu_t, s_t, pTail_t, Creq};
+}
+function q3_compute(){
+  const mu0=+q3_mu0.value, s0=+q3_s0.value, C0=+q3_C0.value;
+  const {pTail, mu_t, s_t, pTail_t, Creq} = q3_params();
+  drawNormalTail('q3_plot', mu0, s0, C0);
+  q3_p_now.textContent = fmt(pTail);
+  q3_mu_t.textContent = mu_t.toFixed(3);
+  q3_s_t.textContent = s_t.toFixed(3);
+  q3_p_t.textContent = fmt(pTail_t);
+  q3_C_req.textContent = Creq.toFixed(3);
+}
+function q3_reset(){
+  q3_mu0.value=200; q3_s0.value=60; q3_C0.value=350;
+  q3_g.value=10; q3_t.value=10; q3_mode.value='linear';
+  ['q3_a','q3_b','q3_c'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('q3_plot').innerHTML='';
+  q3_fb.textContent='';
+}
+function q3_check(){
+  const {pTail, pTail_t, Creq} = q3_params();
+  const ans=[q3_a.value,q3_b.value,q3_c.value];
+  const tgt=[pTail,pTail_t,Creq];
+  const tol=[1e-3,1e-3,1e-1];
+  const ok=ans.every((x,i)=>Math.abs((+x)-tgt[i])<=tol[i]);
+  q3_fb.innerHTML = ok? '<span class="ok">✅ Correct.</span>' :
+    '<span class="bad">❌ Not quite. Hint: (a) $1-\\Phi\\!\\left(\\dfrac{C-\\mu}{\\sigma}\\right)$; (b) grow $\\mu$, keep COV; (c) keep same $z$‑quantile.</span>';
+  if(ok && !sessionStorage.getItem('done_q3')){sessionStorage.setItem('done_q3','1'); computeScore();}
+}
+function q3_solution(){
+  const mu0=+q3_mu0.value, s0=+q3_s0.value, C0=+q3_C0.value;
+  const {pTail, mu_t, s_t, pTail_t, Creq} = q3_params();
+  q3_fb.textContent = `(a) P=1−Φ((C−μ)/σ)=${fmt(pTail)}. (b) μ(t)=${mu_t.toFixed(3)}, σ(t)=${s_t.toFixed(3)} ⇒ P_t=${fmt(pTail_t)}. (c) Let z=Φ⁻¹(1−P_now). Then C_req=μ(t)+σ(t)·z=${Creq.toFixed(3)}.`;
+}
+
+/* ---------- Q4 logic ---------- */
+function q4_params(){
+  const med=+q4_med.value, cov=+q4_cov.value, T=+q4_thr.value;
+  const sig2=Math.log(1+cov*cov), sig=Math.sqrt(sig2), muY=Math.log(med);
+  const z=(Math.log(T)-muY)/sig, pStorm=1-Phi(z);
+  // PMF normalize
+  let ps=[+q4_p0.value, +q4_p1.value, +q4_p2.value, +q4_p3.value].map(v=>Math.max(0, v||0));
+  const s=ps.reduce((a,b)=>a+b,0)||1; ps=ps.map(v=>v/s);
+  const mean = ps[1]*1 + ps[2]*2 + ps[3]*3;
+  const e2 = ps[1]*1 + ps[2]*4 + ps[3]*9;
+  const variance = e2 - mean*mean;
+  const pYear = 1 - (ps[0] + ps[1]*Math.pow(1-pStorm,1) + ps[2]*Math.pow(1-pStorm,2) + ps[3]*Math.pow(1-pStorm,3));
+  return {ps, mean, variance, pStorm, pYear};
+}
+function q4_compute(){
+  const {ps, mean, variance, pStorm, pYear} = q4_params();
+  drawBars('q4_pmf', ['0','1','2','3'], ps);
+  q4_a1.value = mean.toFixed(3);
+  q4_a2.value = variance.toFixed(3);
+  q4_b.value = fmt(pStorm);
+  q4_c.value = fmt(pYear);
+  q4_fb.textContent = `Per‑storm: use lognormal with median m and COV→σ_Y²=ln(1+c²), μ_Y=ln m; annual: 1−∑ p_n(1−p)^n.`;
+}
+function q4_reset(){
+  q4_med.value=7; q4_cov.value=0.15; q4_thr.value=8;
+  q4_p0.value=0.1; q4_p1.value=0.2; q4_p2.value=0.4; q4_p3.value=0.3;
+  ['q4_a1','q4_a2','q4_b','q4_c'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('q4_pmf').innerHTML='';
+  q4_fb.textContent='';
+}
+function q4_check(){
+  const {mean, variance, pStorm, pYear} = q4_params();
+  const ans=[q4_a1.value,q4_a2.value,q4_b.value,q4_c.value];
+  const tgt=[mean,variance,pStorm,pYear];
+  const tol=[1e-3,1e-3,1e-3,1e-3];
+  const ok=ans.every((x,i)=>Math.abs((+x)-tgt[i])<=tol[i]);
+  q4_fb.innerHTML = ok? '<span class="ok">✅ Correct.</span>' :
+    '<span class="bad">❌ Not quite. Hint: normalize PMF; lognormal tail for (b); use total probability for (c).</span>';
+  if(ok && !sessionStorage.getItem('done_q4')){sessionStorage.setItem('done_q4','1'); computeScore();}
+}
+function q4_solution(){
+  const {ps, mean, variance, pStorm, pYear} = q4_params();
+  q4_fb.textContent = `E[N]=∑ n p_n=${mean.toFixed(3)}, Var[N]=∑n²p_n−(E[N])²=${variance.toFixed(3)}. Per‑storm flood: 1−Φ((ln T − ln m)/σ_Y)=${fmt(pStorm)}. Annual: 1−(p₀ + p₁(1−p) + p₂(1−p)² + p₃(1−p)³)=${fmt(pYear)}.`;
+}
+
+/* ---------- Q5 logic ---------- */
+function q5_params(){
+  const lam=+q5_lam.value, L=+q5_L.value, p=clamp(+q5_p.value,0,1), k=Math.max(0,Math.floor(+q5_k.value)), R=+q5_R.value;
+  const lambdaL=lam*L, pAtMost1=Math.exp(-lambdaL)*(1+lambdaL);
+  const pNoneK=Math.pow(p,k);
+  const lamg = lam*(1-p);
+  const pStranded = Math.exp(-lamg*R);
+  return {pAtMost1, pNoneK, pStranded, lamg};
+}
+function q5_compute(){
+  const {pAtMost1, pNoneK, pStranded, lamg} = q5_params();
+  drawBars('q5_plot', ['P(N≤1)','P(none k)','P(stranded)'], [pAtMost1,pNoneK,pStranded]);
+  q5_a.value = fmt(pAtMost1);
+  q5_b.value = fmt(pNoneK);
+  q5_c.value = fmt(pStranded);
+  q5_fb.textContent = `Poisson: $P(N\\le 1)=e^{-\\lambda L}(1+\\lambda L)$; thinning: $\\lambda^g=\\lambda(1-p)$, stranded $=e^{-\\lambda^g R}$.`;
+}
+function q5_reset(){
+  q5_lam.value=0.1; q5_L.value=15; q5_p.value=0.2; q5_k.value=3; q5_R.value=15;
+  ['q5_a','q5_b','q5_c'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('q5_plot').innerHTML='';
+  q5_fb.textContent='';
+}
+function q5_check(){
+  const {pAtMost1, pNoneK, pStranded} = q5_params();
+  const ans=[q5_a.value,q5_b.value,q5_c.value];
+  const tgt=[pAtMost1,pNoneK,pStranded];
+  const ok=ans.every((x,i)=>Math.abs((+x)-tgt[i])<=1e-3);
+  q5_fb.innerHTML = ok? '<span class="ok">✅ Correct.</span>' :
+    '<span class="bad">❌ Check (a) Poisson sum to 1 & 0; (b) independence across k; (c) thinning then zero‑count in distance R.</span>';
+  if(ok && !sessionStorage.getItem('done_q5')){sessionStorage.setItem('done_q5','1'); computeScore();}
+}
+function q5_solution(){
+  const {pAtMost1, pNoneK, pStranded, lamg} = q5_params();
+  q5_fb.textContent = `(a) e^{−λL}(1+λL)=${fmt(pAtMost1)}. (b) p^k=${fmt(pNoneK)}. (c) λᵍ=λ(1−p)=${lamg.toFixed(4)}, stranded=e^{−λᵍR}=${fmt(pStranded)}.`;
+}
+
+/* ---------- Boot ---------- */
+gotoStep(3);
+q3_compute(); q4_compute(); q5_compute();
+</script>
+
+<!-- === AI‑COACH (Floating, toggleable; ChatGPT proxy ready; Math size control) === -->
+<div class="coach-fab" id="aiCoachFab" title="AI Coach">🤖</div>
+<div class="coach-panel" id="aiCoachPanel" aria-live="polite" aria-label="AI Coach panel">
+  <div class="coach-header">
+    <span>AI‑Coach (CE2407A)</span>
+    <button id="aiCoachClose" class="ghost" style="padding:4px 8px;border-radius:8px">Close</button>
+  </div>
+
+  <!-- Optional ChatGPT proxy (off by default) + Math size control -->
+  <div class="coach-config">
+    <label style="display:flex; align-items:center; gap:6px; cursor:pointer; color:#cfe9ff; font-size:13px">
+      <input id="aiUseChatGPT" type="checkbox"> Use ChatGPT for replies (via proxy)
+    </label>
+    <div id="aiChatCfg" style="display:none; gap:8px">
+      <div>
+        <div class="tiny">Proxy endpoint (recommended):</div>
+        <input id="aiChatEndpoint" placeholder="/api/chat" value="https://ce2407-tutorial2.onrender.com/api/chat">
+      </div>
+      <div style="display:grid; gap:6px; grid-template-columns:1fr 1fr 1fr;">
+        <div>
+          <div class="tiny">Model</div>
+          <input id="aiChatModel" value="gpt-4o-mini">
+        </div>
+        <div>
+          <div class="tiny">Temperature</div>
+          <input id="aiChatTemp" type="number" step="0.1" min="0" max="2" value="0.2">
+        </div>
+        <div>
+          <div class="tiny">Math size (%)</div>
+          <input id="aiMathSize" type="number" step="1" min="60" max="120" value="95">
+        </div>
+      </div>
+      <div class="tiny">Tip: if equations still look big/small, tweak “Math size (%)”. It affects only the chat, not the page cards.</div>
+    </div>
+  </div>
+
+  <div class="coach-body" id="aiCoachBody">
+    <div class="coach-msg">Hi! I render LaTeX (at a smaller size). Try: \( z = \frac{C-\mu}{\sigma} \) or $$ P(\text{stranded}) = e^{-\lambda^g R},\ \lambda^g=\lambda(1-p). $$</div>
+  </div>
+
+  <div class="coach-quick">
+    <button class="quick" data-q="Give me a hint.">Hint</button>
+    <button class="quick" data-q="Explain the approach.">Approach</button>
+    <button class="quick" data-q="Open the page’s Show solution button.">Show solution on page</button>
+    <button class="quick" data-q="Define the key terms.">Definitions</button>
+  </div>
+
+  <div class="coach-input">
+    <input id="aiCoachInput" placeholder="Ask about the current question… (LaTeX supported: \\( \\Phi(z) \\), $$…$$)" />
+    <button id="aiCoachSend">Send</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  /* ---------- Elements & helpers ---------- */
+  const $ = (id)=>document.getElementById(id);
+  const fab=$('aiCoachFab'), panel=$('aiCoachPanel'), closeBtn=$('aiCoachClose');
+  const body=$('aiCoachBody'), input=$('aiCoachInput'), send=$('aiCoachSend');
+  const useBox=$('aiUseChatGPT'), cfgWrap=$('aiChatCfg'), ep=$('aiChatEndpoint'), model=$('aiChatModel'), temp=$('aiChatTemp');
+  const mathSize=$('aiMathSize');
+
+  function sanitizeMath(msg){
+    // Remove triple-backtick code fences so MathJax can parse LaTeX within
+    return String(msg).replace(/```(?:\\w+)?\\s*([\\s\\S]*?)```/g, '$1').replace(/\\n{3,}/g,'\\n\\n');
+  }
+  function typesetNow(el){
+    if(window.MathJax && window._mjReady){
+      MathJax.typesetPromise([el]).catch(err=>console.error('MathJax typeset error:', err));
+    } else {
+      setTimeout(()=>typesetNow(el), 120);
+    }
+  }
+  function appendMsg(msg, self=false){
+    const div = document.createElement('div');
+    div.className = 'coach-msg' + (self ? ' coach-self' : '');
+    // keep LaTeX delimiters as plain text; CSS handles newlines
+    div.textContent = sanitizeMath(msg);
+    body.appendChild(div);
+    body.scrollTop = body.scrollHeight;
+    typesetNow(div);
+  }
+
+  function activeSection(){
+    const sec = document.querySelector('section.card:not(.hidden)') || document.querySelector('section.card');
+    if(!sec) return null;
+    const title = (sec.querySelector('.pill')?.textContent || '').trim();
+    const desc  = (sec.querySelector('p')?.textContent || '').trim();
+    const inputs = Array.from(sec.querySelectorAll('input')).map(i=>({id:i.id||'(no id)', val:i.value}));
+    return { id: sec.id, title, desc, inputs, sectionEl: sec };
+  }
+  function clickShowSolutionInPage(){
+    const sec = activeSection()?.sectionEl;
+    if(!sec) return false;
+    const btn = Array.from(sec.querySelectorAll('button')).find(b=>/show solution/i.test(b.textContent||''));
+    if(btn){ btn.click(); return true; }
+    return false;
+  }
+
+  /* ---------- UI wiring ---------- */
+  fab.addEventListener('click', ()=>{ panel.style.display = (panel.style.display==='flex' ? 'none' : 'flex'); panel.style.flexDirection='column'; setTimeout(()=>body.scrollTop=body.scrollHeight,10); });
+  closeBtn.addEventListener('click', ()=> panel.style.display='none');
+  document.querySelectorAll('.coach-quick').forEach(qg=>{
+    qg.addEventListener('click', (e)=>{
+      const b=e.target.closest('.quick'); if(!b) return;
+      coachAsk(b.dataset.q);
+    });
+  });
+  send.addEventListener('click', ()=>coachAsk(input.value));
+  input.addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ coachAsk(input.value); } });
+
+  useBox.addEventListener('change', ()=>{
+    cfgWrap.style.display = useBox.checked ? 'grid' : 'none';
+  });
+
+  // Live math size control
+  const applyMathSize = (pct) => {
+    const clamped = Math.max(60, Math.min(120, Number(pct) || 95));
+    document.documentElement.style.setProperty('--mj-scale', (clamped/100).toString());
+    mathSize.value = String(clamped);
+  };
+  applyMathSize(mathSize.value);
+  mathSize.addEventListener('change', ()=>applyMathSize(mathSize.value));
+
+  /* ---------- Coach logic ---------- */
+  function buildContext(userText){
+    const sec = activeSection();
+    const filled = (sec?.inputs||[]).filter(x=>String(x.val).length>0);
+    const filledPreview = filled.slice(0,12).map(x=>`${x.id}: ${x.val}`).join(', ');
+    return {
+      userText,
+      sectionId: sec?.id||'',
+      title: sec?.title||'',
+      description: sec?.desc||'',
+      inputsPreview: filledPreview
+    };
+  }
+  function localCoach(ctx){
+    const lower = (ctx.userText||'').toLowerCase();
+    const t = (ctx.title||'').toLowerCase();
+    const d = (ctx.description||'').toLowerCase();
+
+    if(/show solution on the page/i.test(lower) || /open the page’s show solution/i.test(lower)){
+      const ok = clickShowSolutionInPage();
+      return ok ? 'Opened the page’s “Show solution”.' : 'Couldn’t find a “Show solution” here.';
+    }
+
+    if(lower.includes('hint')) return hint(t+d);
+    if(lower.includes('approach')||lower.includes('how')||lower.includes('start')) return approach(t+d);
+    if(lower.includes('definition')||lower.includes('define')||lower.includes('terms')) return defs(t+d);
+    return hint(t+d);
+
+    function hint(text){
+      if(/normal|congestion|capacity/i.test(text)){
+        return [
+          'Compute a z‑score:  \\( z=\\dfrac{C-\\mu}{\\sigma} \\), then \\( P(X>C)=1-\\Phi(z) \\).',
+          'If \\(\\mu\\) grows and COV is constant, \\(\\sigma\\) scales with \\(\\mu\\).',
+          'To keep today’s service in year \\(t\\), keep the same \\(z\\):  \\( C_t=\\mu(t)+\\sigma(t)\\,z_0 \\).'
+        ].join('\\n');
+      }
+      if(/lognormal|storm|sewer|flood/i.test(text)){
+        return [
+          'Use lognormal parameters:  \\(\\sigma_Y^2=\\ln(1+c^2)\\), \\(\\mu_Y=\\ln m\\).',
+          'Per‑storm flooding at threshold \\(T\\): \\(1-\\Phi\\!\\left(\\dfrac{\\ln T-\\mu_Y}{\\sigma_Y}\\right)\\).',
+          'Annual ≥1 flood: \\(1-\\sum_n p_n(1-p)^n\\).'
+        ].join('\\n');
+      }
+      if(/poisson|station|highway|thinning/i.test(text)){
+        return [
+          'Counts: \\(N(L)\\sim\\text{Poisson}(\\lambda L)\\Rightarrow P(N\\le1)=e^{-\\lambda L}(1+\\lambda L)\\).',
+          'Shortages independent: \\(P(\\text{none of next }k \\text{ has gas})=p^k\\).',
+          'Thinning: \\(\\lambda^g=\\lambda(1-p)\\), stranded within \\(R\\): \\(e^{-\\lambda^g R}\\).'
+        ].join('\\n');
+      }
+      return 'Share more details or tap “Approach” for step‑by‑step guidance.';
+    }
+    function approach(text){
+      return [
+        '1) Restate and list given values.',
+        '2) Write the governing relationship (Φ tail / lognormal params / Poisson).',
+        '3) Compute intermediate values (z, μ_Y & σ_Y, λL, etc.).',
+        '4) Assemble the final result and check bounds \\([0,1]\\).'
+      ].join('\\n');
+    }
+    function defs(text){
+      return [
+        'Φ(z): standard Normal CDF;  \\(z=(x-\\mu)/\\sigma\\).',
+        'Lognormal:  \\(\\ln X\\sim\\mathcal N(\\mu_Y,\\sigma_Y^2)\\) with median \\(e^{\\mu_Y}\\).',
+        'Poisson process: counts on length \\(L\\) are \\(\\text{Poisson}(\\lambda L)\\); disjoint segments independent.',
+        'Thinning: keep each event with prob \\(q\\Rightarrow\\) new rate \\(q\\lambda\\) (still Poisson).'
+      ].join('\\n');
+    }
+  }
+
+  async function coachAsk(text){
+    if(!text) return;
+    appendMsg(text, true); input.value='';
+
+    const ctx = buildContext(text);
+    try{
+      if($('aiUseChatGPT').checked){
+        const reply = await askChatGPT(ctx);
+        appendMsg(reply || 'No content received from ChatGPT.');
+      }else{
+        appendMsg(localCoach(ctx));
+      }
+    }catch(err){
+      console.error(err);
+      appendMsg('I ran into an error. If ChatGPT mode is on, please check the proxy endpoint/model. Falling back to local hints…');
+      appendMsg(localCoach(ctx));
+    }
+  }
+
+  async function askChatGPT(ctx){
+    const system = [
+      'You are a concise, encouraging AI coach for CE2407A tutorials.',
+      'Give step‑by‑step guidance and hints first; show full derivations only when asked.',
+      'Respect the problem’s notation; keep equations compact; check normalization and independence.'
+    ].join(' ');
+    const content = [
+      `Current section: ${ctx.sectionId} | Title: ${ctx.title}`,
+      `Description: ${ctx.description}`,
+      ctx.inputsPreview ? `Student inputs: ${ctx.inputsPreview}` : 'Student inputs: (none filled)',
+      `Student question: ${ctx.userText}`
+    ].join('\\n');
+
+    const r = await fetch(($('aiChatEndpoint').value||'/api/chat').trim(), {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model: ($('aiChatModel').value||'gpt-4o-mini'),
+        temperature: parseFloat($('aiChatTemp').value||'0.2'),
+        system,
+        messages: [
+          { role:'system', content: system },
+          { role:'user',   content: content }
+        ]
+      })
+    });
+    if(!r.ok) throw new Error('Proxy error '+r.status);
+    const data = await r.json();
+    return data.reply || '';
+  }
+})();
+</script>
+<!-- === /AI‑COACH === -->
+
+</body>
+</html>
