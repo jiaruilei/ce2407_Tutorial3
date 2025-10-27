@@ -107,17 +107,6 @@
   /* Make MathJax a touch smaller and center it nicely in bubbles */
   .coach-msg mjx-container { font-size: calc(1em * var(--mj-scale)); vertical-align: middle; }
 </style>
-
-<style>
-/* === AI‑Coach layout fix: keep input pinned at bottom, body scrolls === */
-.coach-panel{ display:flex; flex-direction:column; }
-.coach-header, .coach-config, .coach-quick, .coach-input{ flex:0 0 auto; }
-.coach-body{ flex:1 1 auto; min-height:0; overflow:auto; overscroll-behavior:contain; padding-bottom:8px; }
-/* Mobile safe-area comfort for input row */
-@supports(padding: max(0px)) {
-  .coach-input{ padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
-}
-</style>
   
 </head>
 <body>
