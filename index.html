@@ -510,7 +510,7 @@ q3_compute(); q4_compute(); q5_compute();
     <div id="aiChatCfg" style="display:none; gap:8px">
       <div>
         <div class="tiny">Proxy endpoint (recommended):</div>
-        <input id="aiChatEndpoint" placeholder="/api/chat" value="https://ce2407-tutorial2.onrender.com/api/chat">
+        <input id="aiChatEndpoint" placeholder="/api/chat" value="https://ce2407-tutorial3.onrender.com/api/chat">
       </div>
       <div style="display:grid; gap:6px; grid-template-columns:1fr 1fr 1fr;">
         <div>
@@ -720,7 +720,7 @@ q3_compute(); q4_compute(); q5_compute();
       `Student question: ${ctx.userText}`
     ].join('\\n');
 
-    const r = await fetch(($('aiChatEndpoint').value||'/api/chat').trim(), {
+    const r = await fetch(($('aiChatEndpoint').value||'https://ce2407-tutorial3.onrender.com/api/chat').trim(), {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
