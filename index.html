@@ -107,14 +107,13 @@
   /* Make MathJax a touch smaller and center it nicely in bubbles */
   .coach-msg mjx-container { font-size: calc(1em * var(--mj-scale)); vertical-align: middle; }
 </style>
-  
 </head>
 <body>
 <header>
   <div class="container" style="display:flex;align-items:flex-start;gap:12px;justify-content:space-between">
     <div>
       <h1>CE2407A — Tutorial Set #2 (Q3–Q5)</h1>
-      <p class="lead">Tutorial 2 Q3, Q4, or Q5. The AI‑Coach (🤖) floats at bottom‑right and renders LaTeX.</p>
+      <p class="lead">Pick Q3, Q4, or Q5. The AI‑Coach (🤖) floats at bottom‑right and renders LaTeX.</p>
     </div>
     <div class="score">Score: <span id="score">0</span> / 3</div>
   </div>
@@ -258,6 +257,8 @@
     </div>
     <div id="q5_fb" class="small"></div>
   </section>
+
+  <p class="footer">Built with a floating AI‑Coach. </p>
 </div>
 
 <script>
@@ -509,7 +510,7 @@ q3_compute(); q4_compute(); q5_compute();
     <div id="aiChatCfg" style="display:none; gap:8px">
       <div>
         <div class="tiny">Proxy endpoint (recommended):</div>
-        <input id="aiChatEndpoint" placeholder="https://ce2407-tutorial3.onrender.com/api/chat" value="https://ce2407-tutorial3.onrender.com/api/chat">
+        <input id="aiChatEndpoint" placeholder="/api/chat" value="https://ce2407-tutorial2.onrender.com/api/chat">
       </div>
       <div style="display:grid; gap:6px; grid-template-columns:1fr 1fr 1fr;">
         <div>
@@ -530,7 +531,7 @@ q3_compute(); q4_compute(); q5_compute();
   </div>
 
   <div class="coach-body" id="aiCoachBody">
-    <div class="coach-msg">Hi!
+    <div class="coach-msg">Hi! How are you today?</div>
   </div>
 
   <div class="coach-quick">
@@ -567,21 +568,14 @@ q3_compute(); q4_compute(); q5_compute();
     }
   }
   function appendMsg(msg, self=false){
-  const div = document.createElement('div');
-  div.className = 'coach-msg' + (self ? ' coach-self' : '');
-  div.innerHTML = asHTML(msg);
-  body.appendChild(div);
-  body.scrollTop = body.scrollHeight;
-
-  // NEW: Typeset math for this message
-  if (window.MathJax && window.__mathjax_ready && MathJax.typesetPromise) {
-    MathJax.typesetPromise([div]).catch(()=>{});
-  } else {
-    // Queue until MathJax is ready
-    window.__mathjax_pending = window.__mathjax_pending || [];
-    window.__mathjax_pending.push(div);
+    const div = document.createElement('div');
+    div.className = 'coach-msg' + (self ? ' coach-self' : '');
+    // keep LaTeX delimiters as plain text; CSS handles newlines
+    div.textContent = sanitizeMath(msg);
+    body.appendChild(div);
+    body.scrollTop = body.scrollHeight;
+    typesetNow(div);
   }
-}
 
   function activeSection(){
     const sec = document.querySelector('section.card:not(.hidden)') || document.querySelector('section.card');
@@ -600,7 +594,7 @@ q3_compute(); q4_compute(); q5_compute();
   }
 
   /* ---------- UI wiring ---------- */
-  fab.addEventListener('click', ()=>{ panel.style.display = (panel.style.display==='flex' ? 'none' : 'flex'); panel.style.flexDirection='column'; setTimeout(()=>
+  fab.addEventListener('click', ()=>{ panel.style.display = (panel.style.display==='flex' ? 'none' : 'flex'); panel.style.flexDirection='column'; setTimeout(()=>body.scrollTop=body.scrollHeight,10); });
   closeBtn.addEventListener('click', ()=> panel.style.display='none');
   document.querySelectorAll('.coach-quick').forEach(qg=>{
     qg.addEventListener('click', (e)=>{
@@ -726,7 +720,7 @@ q3_compute(); q4_compute(); q5_compute();
       `Student question: ${ctx.userText}`
     ].join('\\n');
 
-    const r = await fetch(($('aiChatEndpoint').value||'https://ce2407-tutorial3.onrender.com/api/chat/api/chat').trim(), {
+    const r = await fetch(($('aiChatEndpoint').value||'/api/chat').trim(), {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({
