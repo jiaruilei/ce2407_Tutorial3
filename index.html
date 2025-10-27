@@ -107,6 +107,18 @@
   /* Make MathJax a touch smaller and center it nicely in bubbles */
   .coach-msg mjx-container { font-size: calc(1em * var(--mj-scale)); vertical-align: middle; }
 </style>
+
+<style>
+/* === AI‑Coach layout fix: keep input pinned at bottom, body scrolls === */
+.coach-panel{ display:flex; flex-direction:column; }
+.coach-header, .coach-config, .coach-quick, .coach-input{ flex:0 0 auto; }
+.coach-body{ flex:1 1 auto; min-height:0; overflow:auto; overscroll-behavior:contain; padding-bottom:8px; }
+/* Mobile safe-area comfort for input row */
+@supports(padding: max(0px)) {
+  .coach-input{ padding-bottom: calc(10px + env(safe-area-inset-bottom)); }
+}
+</style>
+  
 </head>
 <body>
 <header>
@@ -566,14 +578,21 @@ q3_compute(); q4_compute(); q5_compute();
     }
   }
   function appendMsg(msg, self=false){
-    const div = document.createElement('div');
-    div.className = 'coach-msg' + (self ? ' coach-self' : '');
-    // keep LaTeX delimiters as plain text; CSS handles newlines
-    div.textContent = sanitizeMath(msg);
-    body.appendChild(div);
-    body.scrollTop = body.scrollHeight;
-    typesetNow(div);
+  const div = document.createElement('div');
+  div.className = 'coach-msg' + (self ? ' coach-self' : '');
+  div.innerHTML = asHTML(msg);
+  body.appendChild(div);
+  // Scroll immediately
+  body.scrollTop = body.scrollHeight;
+
+  // Typeset math for this message, then scroll again (MathJax can change heights)
+  if (window.MathJax && window.__mathjax_ready && MathJax.typesetPromise) {
+    MathJax.typesetPromise([div]).then(()=>{ body.scrollTop = body.scrollHeight; }).catch(()=>{});
+  } else {
+    window.__mathjax_pending = window.__mathjax_pending || [];
+    window.__mathjax_pending.push(div);
   }
+}
 
   function activeSection(){
     const sec = document.querySelector('section.card:not(.hidden)') || document.querySelector('section.card');
@@ -592,7 +611,17 @@ q3_compute(); q4_compute(); q5_compute();
   }
 
   /* ---------- UI wiring ---------- */
-  fab.addEventListener('click', ()=>{ panel.style.display = (panel.style.display==='flex' ? 'none' : 'flex'); panel.style.flexDirection='column'; setTimeout(()=>body.scrollTop=body.scrollHeight,10); });
+  fab.addEventListener('click', ()=>{
+  const wasOpen = panel.style.display==='flex';
+  panel.style.display = (wasOpen ? 'none' : 'flex');
+  panel.style.flexDirection='column';
+  if (!wasOpen) {
+    setTimeout(()=>{
+      try { body.scrollTop = body.scrollHeight; } catch{}
+      try { input && input.focus(); } catch{}
+    }, 30);
+  }
+});
   closeBtn.addEventListener('click', ()=> panel.style.display='none');
   document.querySelectorAll('.coach-quick').forEach(qg=>{
     qg.addEventListener('click', (e)=>{
