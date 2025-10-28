@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CE2407A — Tutorial Set #2 (Q3–Q5) — Wizard + AI‑Coach (MathJax smaller)</title>
+<title>CE2407A — Tutorial Set #2 (Q3–Q6) + AI‑Coach</title>
 
 <!-- MathJax v3: CHTML output, no auto-typeset. We typeset each chat bubble on demand. -->
 <script>
@@ -121,6 +121,7 @@
     <button class="step active" data-step="3" onclick="gotoStep(3)">Q3 — Airport Congestion</button>
     <button class="step" data-step="4" onclick="gotoStep(4)">Q4 — Storm Sewer</button>
     <button class="step" data-step="5" onclick="gotoStep(5)">Q5 — Fuel on Highway</button>
+    <button class="step" data-step="6" onclick="gotoStep(6)">Q6 — Navigation Lock</button>
   </div>
 </header>
 
@@ -258,6 +259,43 @@
     <div id="q5_fb" class="small"></div>
   </section>
 
+
+  <!-- Q6 -->
+  <section id="q6" class="card hidden">
+    <div class="pill">Q6 — Navigation lock (exponential arrivals; 80% no‑wait design)</div>
+    <p>Arrivals are Poisson/exponential with mean inter‑arrival <b>0.5 hr</b>. Design the lock cycle time so that <b>80%</b> of boats pass without waiting; then assess a schedule of boats leaving town A every <b>6 hr</b> over a <b>24‑hr</b> day.</p>
+    <div class="row">
+      <div><label>Mean inter‑arrival (hr)</label><input id="q6_mean" type="number" step="0.01" value="0.5"></div>
+      <div><label>Target no‑wait fraction</label><input id="q6_target" type="number" step="0.01" value="0.8" min="0" max="1"></div>
+      <div><label>Day length (hr)</label><input id="q6_daylen" type="number" step="1" value="24"></div>
+      <div><label>Departure interval (hr)</label><input id="q6_interval" type="number" step="0.1" value="6"></div>
+    </div>
+
+    <div class="row" style="margin-top:8px">
+      <button onclick="q6_compute()">Compute &amp; Plot</button>
+      <button class="secondary" onclick="q6_reset()">Reset</button>
+    </div>
+
+    <div class="svg-wrap"><h3>No‑wait vs Wait (designed setting)</h3><svg id="q6_plot" viewBox="0 0 640 300" role="img" aria-label="Q6 bars"></svg></div>
+
+    <div class="hr"></div>
+    <div class="row">
+      <div><label>(a) Design cycle time s (hr)</label><input id="q6_a" type="number" step="0.0001"></div>
+      <div><label>(b‑i) P(none of the boats wait)</label><input id="q6_bi" type="number" step="0.0001"></div>
+      <div><label>(b‑ii) P(at least 2 boats wait)</label><input id="q6_bii" type="number" step="0.0001"></div>
+    </div>
+
+    <div class="row wizard-nav">
+      <button class="ghost" onclick="gotoStep(5)">← Back</button>
+      <div style="display:flex; gap:8px">
+        <button onclick="q6_check()">Check answers</button>
+        <button class="ghost" onclick="q6_solution()">Show solution</button>
+      </div>
+    </div>
+    <div id="q6_fb" class="small"></div>
+  </section>
+
+
   <p class="footer">Built with a floating AI‑Coach. </p>
 </div>
 
@@ -271,7 +309,7 @@ function computeScore(){
 }
 function gotoStep(n){
   CURRENT_STEP = n;
-  ['q3','q4','q5'].forEach((id,idx)=>document.getElementById(id).classList.toggle('hidden', (idx+3)!==n));
+  ['q3','q4','q5','q6'].forEach((id,idx)=>document.getElementById(id).classList.toggle('hidden', (idx+3)!==n));
   document.querySelectorAll('.step').forEach(btn=>btn.classList.toggle('active', +btn.dataset.step===n));
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -489,9 +527,48 @@ function q5_solution(){
   q5_fb.textContent = `(a) e^{−λL}(1+λL)=${fmt(pAtMost1)}. (b) p^k=${fmt(pNoneK)}. (c) λᵍ=λ(1−p)=${lamg.toFixed(4)}, stranded=e^{−λᵍR}=${fmt(pStranded)}.`;
 }
 
+/* ---------- Q6 logic ---------- */
+function q6_params(){
+  const mean = +q6_mean.value;
+  const target = Math.max(0, Math.min(1, +q6_target.value));
+  const lam = mean > 0 ? 1/mean : 0;              // arrivals per hour
+  // Design (a): P(no wait) = P(T > s) = exp(-λ s) = target  ⇒  s = -ln(target)/λ
+  const s = lam > 0 && target > 0 ? -Math.log(target)/lam : 0;
+  const pNoWait = (lam > 0 && s >= 0) ? Math.exp(-lam * s) : 0;   // equals 'target' ideally
+  const pWait = Math.max(0, 1 - pNoWait);
+
+  const day = +q6_daylen?.value || +q6_day?.value || 24;
+  const interval = +q6_interval.value;
+  const n = interval > 0 ? Math.floor(day/interval) : 0;
+
+  const pNoneWait = Math.pow(pNoWait, n);
+  const pAtLeast2Wait = 1 - (pNoneWait + n * pWait * Math.pow(pNoWait, n-1));
+  return {lam,s,pNoWait,pWait,n,pNoneWait,pAtLeast2Wait};
+}
+function q6_compute(){
+  const {lam,s,pNoWait,pWait,n,pNoneWait,pAtLeast2Wait} = q6_params();
+  drawBars('q6_plot', ['no-wait','wait'], [pNoWait,pWait]);
+  q6_fb.textContent = `Exponential inter-arrivals: P(no wait)=exp(−λ s). With λ=${lam.toFixed(4)}/hr, design s=${s.toFixed(4)} hr gives P(no wait)=${pNoWait.toFixed(4)}. For n=${n} scheduled boats: P(none wait)=${fmt(pNoneWait)}, P(≥2 wait)=${fmt(pAtLeast2Wait)}.`;
+}
+function q6_reset(){}
+function q6_check(){
+  const {s,pNoneWait,pAtLeast2Wait} = q6_params();
+  const ans=[q6_a.value,q6_bi.value,q6_bii.value];
+  const tgt=[s,pNoneWait,pAtLeast2Wait];
+  const tol=[1e-3,1e-3,1e-3];
+  const ok=ans.every((x,i)=>Math.abs((+x)-tgt[i])<=tol[i]);
+  q6_fb.innerHTML = ok? '<span class="ok">✅ Correct.</span>' :
+    '<span class="bad">❌ Not quite. Hint: (a) set exp(−λ s)=target ⇒ s=−ln(target)/λ; (b) per‑boat wait prob. = 1−exp(−λ s).';
+  if(ok && !sessionStorage.getItem('done_q6')){sessionStorage.setItem('done_q6','1'); computeScore();}
+}
+function q6_solution(){
+  const {lam,s,pNoWait,pWait,n,pNoneWait,pAtLeast2Wait} = q6_params();
+  q6_fb.textContent = `(a) Inter‑arrival T~Exp(λ). No‑wait ⇔ T>s ⇒ P=1−F_T(s)=e^{−λ s}. Set to 0.8 ⇒ s=−ln(0.8)/λ=${s.toFixed(4)} hr. (b) n=${n}; per‑boat wait prob.=1−e^{−λ s}. P(0 wait)=(e^{−λ s})^n=${fmt(pNoneWait)}; P(≥2)=1−[(e^{−λ s})^n + n(1−e^{−λ s})(e^{−λ s})^{n−1}]=${fmt(pAtLeast2Wait)}.`;
+}
+
 /* ---------- Boot ---------- */
 gotoStep(3);
-q3_compute(); q4_compute(); q5_compute();
+q3_compute(); q4_compute(); q5_compute(); q6_compute();
 </script>
 
 <!-- === AI‑COACH (Floating, toggleable; ChatGPT proxy ready; Math size control) === -->
